@@ -102,6 +102,8 @@ public class ChatConnector implements Verticle {
             });
 
         }).listen(Configuration.CONNECTOR_PORT);
+
+        System.out.println("Listening for rooms on port " + Configuration.CONNECTOR_PORT);
     }
 
     /**

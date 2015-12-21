@@ -22,7 +22,7 @@ import org.junit.runner.RunWith;
  */
 
 @RunWith(VertxUnitRunner.class)
-public class ConnectorTest extends AbstractVerticle {
+public class ConnectorUnit extends AbstractVerticle {
     private Vertx vertx = Vertx.vertx();
 
     @Rule
