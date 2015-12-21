@@ -8,6 +8,7 @@ import java.util.List;
  * Transfer object for history requests/replies.
  */
 public class History {
+    public static final String ACTION = "history";
     private String room;
     private List<Message> list;
     private Header header;
@@ -16,7 +17,7 @@ public class History {
     }
 
     public History(String room, String actor) {
-        header = new Header("history", actor);
+        header = new Header(ACTION, actor);
         this.room = room;
     }
 

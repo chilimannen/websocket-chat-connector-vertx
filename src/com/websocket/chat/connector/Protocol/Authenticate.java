@@ -6,6 +6,7 @@ package com.websocket.chat.connector.Protocol;
  * Transfer object for Authentication requests/replies.
  */
 public class Authenticate {
+    public static final String ACTION = "authenticate";
     private Header header;
     private String username;
     private String password;
@@ -15,7 +16,7 @@ public class Authenticate {
     public Authenticate() {}
 
     public Authenticate(String username, String password, String actor) {
-        header = new Header("authenticate", actor);
+        header = new Header(ACTION, actor);
         this.password = password;
         this.username = username;
     }

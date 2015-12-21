@@ -8,6 +8,7 @@ import com.websocket.chat.connector.Model.Server;
  * Sent from the connector, indicating a chatservers state.
  */
 public class ServerEvent {
+    public static final String ACTION = "registry.server";
     private String name;
     private String ip;
     private Integer port;
@@ -33,7 +34,7 @@ public class ServerEvent {
 
     public ServerEvent(ServerStatus status) {
         this.status = status;
-        this.header = new Header("registry.server");
+        this.header = new Header(ACTION);
     }
 
     public String getName() {

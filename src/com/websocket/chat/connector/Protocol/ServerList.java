@@ -9,6 +9,7 @@ import java.util.List;
  * Transfer object for requesting/returning a list of the currently connected servers.
  */
 public class ServerList {
+    public static final String ACTION = "server.list";
     private Header header;
     private List<ServerInfo> list;
 
@@ -16,7 +17,7 @@ public class ServerList {
     }
 
     public ServerList(String actor) {
-        this.header = new Header("server.list", actor);
+        this.header = new Header(ACTION, actor);
     }
 
     public ServerList(ArrayList<ServerInfo> list) {

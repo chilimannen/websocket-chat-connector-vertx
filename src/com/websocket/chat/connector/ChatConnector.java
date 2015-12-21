@@ -7,6 +7,7 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.EventBus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,11 +19,11 @@ import java.util.Map;
  * Manages all the connected chatrooms, forwards events and messages to the
  * database and other connected chatrooms.
  */
-class ChatConnector implements Verticle {
+public class ChatConnector implements Verticle {
     private Vertx vertx;
+    private EventBus bus;
     private Map<String, MessageHandler> messageHandler = new HashMap<>();
     private Map<String, DatabaseHandler> databaseHandler = new HashMap<>();
-    // reverse indexing the room:servers list for O(1)
     private Map<String, Server> servers = new HashMap<>();
     private Map<String, Map<String, Server>> rooms = new HashMap<>();
 
@@ -31,23 +32,33 @@ class ChatConnector implements Verticle {
         return vertx;
     }
 
+    public ChatConnector() {
+    }
+
+    public ChatConnector(EventBus bus) {
+        this.bus = bus;
+    }
+
     @Override
     public void init(Vertx vertx, Context context) {
         this.vertx = vertx;
+        this.bus = vertx.eventBus();
 
-        databaseHandler.put("history", DatabaseHandler.HISTORY);
-        databaseHandler.put("room", DatabaseHandler.ROOM);
-        databaseHandler.put("authenticate", DatabaseHandler.AUTHENTICATE);
+        databaseHandler.put(History.ACTION, DatabaseHandler.HISTORY);
+        databaseHandler.put(RoomInfo.ACTION, DatabaseHandler.ROOM);
+        databaseHandler.put(Authenticate.ACTION, DatabaseHandler.AUTHENTICATE);
 
-        messageHandler.put("authenticate", MessageHandler.AUTHENTICATE);
-        messageHandler.put("room", MessageHandler.ROOM);
-        messageHandler.put("server.list", MessageHandler.SERVER_LIST);
-        messageHandler.put("user.event", MessageHandler.USER_EVENT);
-        messageHandler.put("registry.room", MessageHandler.ROOM_STATUS);
-        messageHandler.put("registry.server", MessageHandler.SERVER_STATUS);
-        messageHandler.put("history", MessageHandler.HISTORY);
-        messageHandler.put("message", MessageHandler.CHAT_MESSAGE);
-        messageHandler.put("topic", MessageHandler.TOPIC);
+        messageHandler.put(Register.ACTION, MessageHandler.SERVER_REGISTER);
+        messageHandler.put(RoomEvent.ACTION, MessageHandler.ROOM_STATUS);
+        messageHandler.put(ServerEvent.ACTION, MessageHandler.SERVER_STATUS);
+
+        messageHandler.put(Authenticate.ACTION, MessageHandler.AUTHENTICATE);
+        messageHandler.put(RoomInfo.ACTION, MessageHandler.ROOM);
+        messageHandler.put(ServerList.ACTION, MessageHandler.SERVER_LIST);
+        messageHandler.put(UserEvent.ACTION, MessageHandler.USER_EVENT);
+        messageHandler.put(History.ACTION, MessageHandler.HISTORY);
+        messageHandler.put(Message.ACTION, MessageHandler.CHAT_MESSAGE);
+        messageHandler.put(Topic.ACTION, MessageHandler.TOPIC);
     }
 
     @Override
@@ -79,23 +90,17 @@ class ChatConnector implements Verticle {
 
             event.handler(data -> {
                 Packet packet = (Packet) Serializer.unpack(data.toString(), Packet.class);
+                MessageHandler handler = messageHandler.get(packet.getAction());
 
-                if (packet.getAction().equals("register")) {
-                    Register register = (Register) Serializer.unpack(data.toString(), Register.class);
-                    server.setString(register.getName());
-                    registerChatServer(new Server(register, event.remoteAddress().host(), event.textHandlerID()));
-                } else {
-                    MessageHandler handler = messageHandler.get(packet.getAction());
-
-                    if (handler != null)
-                        handler.process(new HandlerParams(data.toString(), this, event.textHandlerID(), server.getString()));
-                }
+                if (handler != null)
+                    handler.process(new HandlerParams(data.toString(), this, event, server));
             });
 
             event.closeHandler(close -> {
                 if (server.getString() != null)
                     deregisterChatServer(server.getString());
             });
+
         }).listen(Configuration.CONNECTOR_PORT);
     }
 
@@ -105,7 +110,8 @@ class ChatConnector implements Verticle {
      *
      * @param server name of the server to be deregistered.
      */
-    private void deregisterChatServer(String server) {
+
+    protected void deregisterChatServer(String server) {
         HashMap<String, Room> subscribed = servers.get(server).getRooms();
 
         for (Room room : subscribed.values()) {
@@ -123,13 +129,14 @@ class ChatConnector implements Verticle {
      *
      * @param server to be registered.
      */
-    private void registerChatServer(Server server) {
+    protected void registerChatServer(Server server) {
         servers.put(server.getName(), server);
         sendBus(Configuration.BUS_REGISTRY, new ServerEvent(server, ServerEvent.ServerStatus.UP));
+        System.out.println("Registered server " + server.getName());
     }
 
-    public void sendBus(String address, Object message) {
-        vertx.eventBus().send(address, Serializer.pack(message));
+    protected void sendBus(String address, Object message) {
+        bus.send(address, Serializer.pack(message));
     }
 
     @Override
@@ -143,7 +150,7 @@ class ChatConnector implements Verticle {
      *
      * @param room the room to have it status changed.
      */
-    public void setRoomStatus(RoomEvent room) {
+    protected void setRoomStatus(RoomEvent room) {
         Server server = servers.get(room.getServer());
 
         if (server != null) {
@@ -169,7 +176,7 @@ class ChatConnector implements Verticle {
      *
      * @param event contains the server and its new state.
      */
-    public void setServerStatus(ServerEvent event) {
+    protected void setServerStatus(ServerEvent event) {
         Server server = servers.get(event.getName());
 
         if (server != null) {
@@ -185,7 +192,7 @@ class ChatConnector implements Verticle {
      * @param room    to send the message to.
      * @param origin  server name to ignore.
      */
-    public void sendRoom(Object message, String room, String origin) {
+    protected void sendRoom(Object message, String room, String origin) {
 
         if (rooms.get(room) != null) {
             for (Server server : rooms.get(room).values()) {
@@ -201,7 +208,7 @@ class ChatConnector implements Verticle {
     /**
      * @return a list of all the servers connected to the connector.
      */
-    public ServerList getServerList() {
+    protected ServerList getServerList() {
         ArrayList<ServerInfo> list = new ArrayList<>();
 
         for (Server server : servers.values())

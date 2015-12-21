@@ -6,6 +6,7 @@ package com.websocket.chat.connector.Protocol;
  * Message transfer object.
  */
 public class Message {
+    public final static String ACTION = "message";
     private String sender;
     private String content;
     private String room;
@@ -23,11 +24,11 @@ public class Message {
     public Message(String content, String room) {
         this.content = content;
         this.room = room;
-        this.header = new Header("message");
+        this.header = new Header(ACTION);
     }
 
     public Message resetHeader() {
-        this.header = new Header("message");
+        this.header = new Header(ACTION);
         return this;
     }
 

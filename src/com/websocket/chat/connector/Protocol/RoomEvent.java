@@ -7,6 +7,7 @@ package com.websocket.chat.connector.Protocol;
  * which servers have users in which rooms.
  */
 public class RoomEvent {
+    public static final String ACTION = "registry.room";
     private RoomStatus status;
     private String server;
     private String room;
@@ -20,7 +21,7 @@ public class RoomEvent {
     }
 
     public RoomEvent() {
-        this.header = new Header("registry.room");
+        this.header = new Header(ACTION);
     }
 
     public RoomStatus getStatus() {

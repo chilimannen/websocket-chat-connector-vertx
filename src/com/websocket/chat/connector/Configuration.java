@@ -5,7 +5,7 @@ package com.websocket.chat.connector;
  *
  * Configuration file.
  */
-class Configuration {
+public class Configuration {
     public static final Integer CONNECTOR_PORT = 5030;
     public static final Integer DATABASE_PORT = 6070;
     public static final Integer REGISTRY_PORT = 7040;

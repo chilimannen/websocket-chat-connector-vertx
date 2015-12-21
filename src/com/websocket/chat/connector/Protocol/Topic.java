@@ -6,12 +6,13 @@ package com.websocket.chat.connector.Protocol;
  * Transfer object for changing the topic and notifying topic changes.
  */
 public class Topic {
+    public static final String ACTION = "topic";
     private Header header;
     private String topic;
     private String room;
 
     public Topic() {
-        this.header = new Header("topic");
+        this.header = new Header(ACTION);
     }
 
 

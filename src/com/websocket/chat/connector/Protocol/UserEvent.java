@@ -6,6 +6,7 @@ package com.websocket.chat.connector.Protocol;
  * Transfer object for user events.
  **/
 public class UserEvent {
+    public final static String ACTION = "user.event";
     private Boolean join;
     private String room;
     private String username;

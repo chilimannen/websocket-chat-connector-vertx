@@ -6,6 +6,7 @@ package com.websocket.chat.connector.Protocol;
  * Transfer object for querying a room or returning a query response.
  */
 public class RoomInfo {
+    public static final String ACTION = "room";
     private String topic;
     private String room;
     private String owner;

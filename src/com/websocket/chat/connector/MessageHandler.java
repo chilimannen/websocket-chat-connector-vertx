@@ -1,5 +1,6 @@
 package com.websocket.chat.connector;
 
+import com.websocket.chat.connector.Model.Server;
 import com.websocket.chat.connector.Protocol.*;
 
 /**
@@ -39,7 +40,7 @@ enum MessageHandler {
         @Override
         void process(HandlerParams params) {
             Message message = (Message) Serializer.unpack(params.data, Message.class);
-            params.connector.sendRoom(message, message.getRoom(), params.server);
+            params.connector.sendRoom(message, message.getRoom(), params.serverName);
         }
     },
 
@@ -65,7 +66,7 @@ enum MessageHandler {
         @Override
         void process(HandlerParams params) {
             Topic topic = (Topic) Serializer.unpack(params.data, Topic.class);
-            params.connector.sendRoom(topic, topic.getRoom(), params.server);
+            params.connector.sendRoom(topic, topic.getRoom(), params.serverName);
             params.connector.sendBus(Configuration.BUS_DATABASE_REQUEST, topic);
         }
     },
@@ -74,7 +75,7 @@ enum MessageHandler {
         @Override
         void process(HandlerParams params) {
             UserEvent event = (UserEvent) Serializer.unpack(params.data, UserEvent.class);
-            params.connector.sendRoom(event, event.getRoom(), params.server);
+            params.connector.sendRoom(event, event.getRoom(), params.serverName);
         }
     },
 
@@ -84,6 +85,15 @@ enum MessageHandler {
             ServerList serverlist = (ServerList) Serializer.unpack(params.data, ServerList.class);
             serverlist.setList(params.connector.getServerList().getList());
             params.connector.sendBus(params.address, serverlist);
+        }
+    },
+
+    SERVER_REGISTER {
+        @Override
+        void process(HandlerParams params) {
+            Register register = (Register) Serializer.unpack(params.data, Register.class);
+            params.connector.registerChatServer(new Server(register, params.ip, params.address));
+            params.server.setString(register.getName());
         }
     };
 

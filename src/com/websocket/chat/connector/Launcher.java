@@ -4,6 +4,8 @@ import io.vertx.core.*;
 
 /**
  * Created by Robin on 2015-12-19.
+ * <p>
+ * Launches the required verticle for the component.
  */
 public class Launcher implements Verticle {
     private Vertx vertx;
@@ -16,13 +18,13 @@ public class Launcher implements Verticle {
     @Override
     public void init(Vertx vertx, Context context) {
         this.vertx = vertx;
+        vertx.deployVerticle(new DatabaseConnector());
+        vertx.deployVerticle(new ChatConnector());
+        vertx.deployVerticle(new RegistryConnector());
     }
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
-        vertx.deployVerticle(new DatabaseConnector());
-        vertx.deployVerticle(new ChatConnector());
-        vertx.deployVerticle(new RegistryConnector());
     }
 
     @Override
