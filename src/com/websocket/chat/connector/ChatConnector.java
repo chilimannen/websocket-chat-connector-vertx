@@ -119,11 +119,19 @@ public class ChatConnector implements Verticle {
         for (Room room : subscribed.values()) {
             rooms.get(room.getName()).remove(server);
 
-            if (rooms.get(room.getName()).isEmpty())
+            if (rooms.get(room.getName()).isEmpty()) {
                 sendBus(Configuration.BUS_REGISTRY, new RoomEvent(server, room.getName(), RoomEvent.RoomStatus.DEPLETED));
+                removeEmptyRoom(room.getName());
+            }
         }
         servers.remove(server);
         sendBus(Configuration.BUS_REGISTRY, new ServerEvent(server, ServerEvent.ServerStatus.DOWN));
+    }
+
+    private void removeEmptyRoom(String room) {
+        if (rooms.get(room).isEmpty()) {
+            sendBus(Configuration.BUS_DATABASE_REQUEST, new RoomEvent(room, RoomEvent.RoomStatus.DEPLETED));
+        }
     }
 
     /**
@@ -161,13 +169,13 @@ public class ChatConnector implements Verticle {
             }
 
             if (room.getStatus().equals(RoomEvent.RoomStatus.POPULATED)) {
-                rooms.get(room.getRoom()).put(room.getRoom(), server);
                 server.getRooms().put(room.getRoom(), new Room(room));
+                rooms.get(room.getRoom()).put(room.getServer(), server);
             } else {
                 rooms.get(room.getRoom()).remove(room.getServer());
                 server.getRooms().remove(room.getRoom());
+                removeEmptyRoom(room.getRoom());
             }
-
             sendBus(Configuration.BUS_REGISTRY, room);
         }
     }

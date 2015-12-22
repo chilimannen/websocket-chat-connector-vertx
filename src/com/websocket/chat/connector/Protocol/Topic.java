@@ -2,7 +2,7 @@ package com.websocket.chat.connector.Protocol;
 
 /**
  * Created by Robin on 2015-12-16.
- *
+ * <p>
  * Transfer object for changing the topic and notifying topic changes.
  */
 public class Topic {
@@ -13,6 +13,12 @@ public class Topic {
 
     public Topic() {
         this.header = new Header(ACTION);
+    }
+
+    public Topic(String room, String topic) {
+        this();
+        this.room = room;
+        this.topic = topic;
     }
 
 

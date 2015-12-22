@@ -24,6 +24,12 @@ public class RoomEvent {
         this.header = new Header(ACTION);
     }
 
+    public RoomEvent(String room, RoomStatus status) {
+        this();
+        this.room = room;
+        this.status = status;
+    }
+
     public RoomStatus getStatus() {
         return status;
     }

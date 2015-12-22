@@ -178,14 +178,15 @@ public class ConnectorUnit extends AbstractVerticle {
         ChatConnector connector = getConnector(interceptor -> {
             Packet packet = (Packet) Serializer.unpack(interceptor.message().body().toString(), Packet.class);
 
-            if (packet.getAction().equals(RoomEvent.ACTION)) {
-                RoomEvent event = (RoomEvent) Serializer.unpack(interceptor.message().body().toString(), RoomEvent.class);
-                if (event.getStatus().equals(RoomEvent.RoomStatus.DEPLETED)) {
-                    context.assertEquals(event.getServer(), "test.server.1");
-                    context.assertEquals(event.getRoom(), "room");
-                    async.complete();
+            if (interceptor.message().address().equals(Configuration.BUS_REGISTRY))
+                if (packet.getAction().equals(RoomEvent.ACTION)) {
+                    RoomEvent event = (RoomEvent) Serializer.unpack(interceptor.message().body().toString(), RoomEvent.class);
+                    if (event.getStatus().equals(RoomEvent.RoomStatus.DEPLETED)) {
+                        context.assertEquals(event.getServer(), "test.server.1");
+                        context.assertEquals(event.getRoom(), "room");
+                        async.complete();
+                    }
                 }
-            }
         });
 
         connector.registerChatServer(server);
@@ -237,5 +238,92 @@ public class ConnectorUnit extends AbstractVerticle {
         connector.setRoomStatus(new RoomEvent("test.server.1", "room", RoomEvent.RoomStatus.POPULATED));
         connector.sendRoom(new Message("ignore_this", "room").setSender("user").setCommand(true), "room", "test.server.1");
         connector.sendRoom(new Message("get_this", "room").setSender("user").setCommand(true), "room", "/dev/null");
+    }
+
+    @Test
+    public void shouldSendTopicUpdate(TestContext context) {
+        final Async async = context.async();
+        Server server = new Server(new Register("test.server.1", 9099), "localhost", "null");
+
+        ChatConnector connector = getConnector(interceptor -> {
+            Packet packet = (Packet) Serializer.unpack(interceptor.message().body().toString(), Packet.class);
+
+            if (!interceptor.message().address().equals(Configuration.BUS_DATABASE_REQUEST))
+                if (packet.getAction().equals(Topic.ACTION)) {
+                    Topic topic = (Topic) Serializer.unpack(interceptor.message().body().toString(), Topic.class);
+                    context.assertEquals(topic.getTopic(), "topic");
+                    context.assertEquals(topic.getRoom(), "room");
+                    async.complete();
+                }
+        });
+
+        connector.registerChatServer(server);
+        connector.setRoomStatus(new RoomEvent("test.server.1", "room", RoomEvent.RoomStatus.POPULATED));
+        connector.sendRoom(new Topic("room", "topic"), "room", "*");
+    }
+
+    @Test
+    public void shouldSendMessagesToDB(TestContext context) {
+        final Async async = context.async();
+        Server server = new Server(new Register("test.server.1", 9099), "localhost", "null");
+
+        ChatConnector connector = getConnector(interceptor -> {
+            Packet packet = (Packet) Serializer.unpack(interceptor.message().body().toString(), Packet.class);
+
+            if (interceptor.message().address().equals(Configuration.BUS_DATABASE_REQUEST))
+                if (packet.getAction().equals(Topic.ACTION)) {
+                    Topic topic = (Topic) Serializer.unpack(interceptor.message().body().toString(), Topic.class);
+                    context.assertEquals(topic.getTopic(), "topic");
+                    context.assertEquals(topic.getRoom(), "room");
+                    async.complete();
+                }
+        });
+
+        connector.registerChatServer(server);
+        connector.setRoomStatus(new RoomEvent("test.server.1", "room", RoomEvent.RoomStatus.POPULATED));
+        connector.sendRoom(new Topic("room", "topic"), "room", "*");
+    }
+
+    @Test
+    public void shouldSendTopicsToDB(TestContext context) {
+        final Async async = context.async();
+        Server server = new Server(new Register("test.server.1", 9099), "localhost", "null");
+
+        ChatConnector connector = getConnector(interceptor -> {
+            Packet packet = (Packet) Serializer.unpack(interceptor.message().body().toString(), Packet.class);
+
+            if (interceptor.message().address().equals(Configuration.BUS_DATABASE_REQUEST))
+                if (packet.getAction().equals(Topic.ACTION)) {
+                    Topic topic = (Topic) Serializer.unpack(interceptor.message().body().toString(), Topic.class);
+                    context.assertEquals(topic.getTopic(), "topic");
+                    context.assertEquals(topic.getRoom(), "room");
+                    async.complete();
+                }
+        });
+
+        connector.registerChatServer(server);
+        connector.setRoomStatus(new RoomEvent("test.server.1", "room", RoomEvent.RoomStatus.POPULATED));
+        connector.sendRoom(new Topic("room", "topic"), "room", "*");
+    }
+
+    @Test
+    public void shouldSendDepletedToDB(TestContext context) {
+        final Async async = context.async();
+        Server server = new Server(new Register("test.server.1", 9099), "localhost", null);
+
+        ChatConnector connector = getConnector(interceptor -> {
+            Packet packet = (Packet) Serializer.unpack(interceptor.message().body().toString(), Packet.class);
+
+            if (interceptor.message().address().equals(Configuration.BUS_DATABASE_REQUEST))
+                if (packet.getAction().equals(RoomEvent.ACTION)) {
+                    RoomEvent event = (RoomEvent) Serializer.unpack(interceptor.message().body().toString(), RoomEvent.class);
+                    context.assertEquals(event.getStatus(), RoomEvent.RoomStatus.DEPLETED);
+                    context.assertEquals(event.getRoom(), "room");
+                    async.complete();
+                }
+        });
+        connector.registerChatServer(server);
+        connector.setRoomStatus(new RoomEvent("test.server.1", "room", RoomEvent.RoomStatus.POPULATED));
+        connector.deregisterChatServer(server.getName());
     }
 }
