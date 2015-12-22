@@ -211,6 +211,7 @@ public class ChatConnector implements Verticle {
                     sendBus(server.getAddress(), message);
             }
 
+            // todo should not send room join/leave to the database!
             sendBus(Configuration.BUS_DATABASE_REQUEST, message);
         }
     }
