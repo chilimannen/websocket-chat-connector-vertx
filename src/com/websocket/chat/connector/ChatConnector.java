@@ -26,6 +26,7 @@ public class ChatConnector implements Verticle {
     private Map<String, DatabaseHandler> databaseHandler = new HashMap<>();
     private Map<String, Server> servers = new HashMap<>();
     private Map<String, Map<String, Server>> rooms = new HashMap<>();
+    private IOLogger ioLogger = new IOLogger("logging.messages.io");
 
     @Override
     public Vertx getVertx() {
@@ -65,6 +66,7 @@ public class ChatConnector implements Verticle {
     public void start(Future<Void> startFuture) throws Exception {
         startConnector();
         startDBListener();
+        startLogSender();
     }
 
     /**
@@ -92,8 +94,10 @@ public class ChatConnector implements Verticle {
                 Packet packet = (Packet) Serializer.unpack(data.toString(), Packet.class);
                 MessageHandler handler = messageHandler.get(packet.getAction());
 
-                if (handler != null)
+                if (handler != null) {
                     handler.process(new HandlerParams(data.toString(), this, event, server));
+                    ioLogger.in();
+                }
             });
 
             event.closeHandler(close -> {
@@ -104,6 +108,13 @@ public class ChatConnector implements Verticle {
         }).listen(Configuration.CONNECTOR_PORT);
 
         System.out.println("Listening for rooms on port " + Configuration.CONNECTOR_PORT);
+    }
+
+    private void startLogSender() {
+        vertx.setPeriodic(Configuration.LOG_INTERVAL, event -> {
+            sendBus(Configuration.BUS_LOGGER, ioLogger);
+            ioLogger.reset();
+        });
     }
 
     /**
@@ -147,6 +158,7 @@ public class ChatConnector implements Verticle {
 
     protected void sendBus(String address, Object message) {
         bus.send(address, Serializer.pack(message));
+        ioLogger.out();
     }
 
     @Override

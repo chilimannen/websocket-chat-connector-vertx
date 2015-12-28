@@ -21,6 +21,7 @@ public class Launcher implements Verticle {
         vertx.deployVerticle(new DatabaseConnector());
         vertx.deployVerticle(new ChatConnector());
         vertx.deployVerticle(new RegistryConnector());
+        vertx.deployVerticle(new Logger());
     }
 
     @Override
