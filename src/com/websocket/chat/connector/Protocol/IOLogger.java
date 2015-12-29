@@ -16,10 +16,6 @@ public class IOLogger {
     public IOLogger() {
     }
 
-    public IOLogger(String type) {
-        this.type = type;
-    }
-
     public void in() {
         in += 1;
     }

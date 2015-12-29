@@ -26,7 +26,7 @@ public class ChatConnector implements Verticle {
     private Map<String, DatabaseHandler> databaseHandler = new HashMap<>();
     private Map<String, Server> servers = new HashMap<>();
     private Map<String, Map<String, Server>> rooms = new HashMap<>();
-    private IOLogger ioLogger = new IOLogger("logging.messages.io");
+    private IOLogger ioLogger = new IOLogger();
 
     @Override
     public Vertx getVertx() {
