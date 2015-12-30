@@ -1,5 +1,7 @@
 package com.websocket.chat.connector.Protocol;
 
+import java.util.ArrayList;
+
 /**
  * Created by Robin on 2015-12-16.
  * <p>
@@ -13,6 +15,7 @@ public class RoomInfo {
     private Header header;
     private String username;
     private Boolean created;
+    private ArrayList<Message> history = new ArrayList<>();
 
     public RoomInfo() {
     }
@@ -64,5 +67,13 @@ public class RoomInfo {
 
     public void setRoom(String name) {
         this.room = name;
+    }
+
+    public ArrayList<Message> getHistory() {
+        return history;
+    }
+
+    public void setHistory(ArrayList<Message> history) {
+        this.history = history;
     }
 }

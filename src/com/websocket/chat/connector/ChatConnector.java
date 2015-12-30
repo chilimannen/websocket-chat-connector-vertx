@@ -27,6 +27,7 @@ public class ChatConnector implements Verticle {
     private Map<String, Server> servers = new HashMap<>();
     private Map<String, Map<String, Server>> rooms = new HashMap<>();
     private IOLogger ioLogger = new IOLogger();
+    private MessageBatch batch = new MessageBatch();
 
     @Override
     public Vertx getVertx() {
@@ -67,6 +68,7 @@ public class ChatConnector implements Verticle {
         startConnector();
         startDBListener();
         startLogSender();
+        startBatchHandler();
     }
 
     /**
@@ -223,9 +225,32 @@ public class ChatConnector implements Verticle {
                     sendBus(server.getAddress(), message);
             }
 
-            // todo should not send room join/leave to the database!
-            sendBus(Configuration.BUS_DATABASE_REQUEST, message);
+            if (message instanceof Message) {
+                batch.add((Message) message);
+
+                if (batch.ready())
+                    sendBatch();
+            }
         }
+    }
+
+    /**
+     * Empties the batch when load is low.
+     */
+    private void startBatchHandler() {
+        vertx.setPeriodic(Configuration.BATCH_UPDATE, event -> {
+            if (!batch.isEmpty()) {
+                sendBatch();
+            }
+        });
+    }
+
+    /**
+     * Sends a batch of messages to persistence for processing.
+     */
+    private void sendBatch() {
+        sendBus(Configuration.BUS_DATABASE_REQUEST, batch);
+        batch.clear();
     }
 
     /**

@@ -43,7 +43,7 @@ public abstract class Serializer {
             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             return mapper.readValue(json, format);
         } catch (IOException e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e.getMessage() + " for " + json);
         }
     }
 }
